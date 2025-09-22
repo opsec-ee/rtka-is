@@ -3,175 +3,213 @@
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.17148691.svg)](https://doi.org/10.5281/zenodo.17148691)
 [![ORCID](https://img.shields.io/badge/ORCID-0009--0007--9737--762X-green.svg)](https://orcid.org/0009-0007-9737-762X)
 
-By H. Overman ([opsec.ee@pm.me](mailto:opsec.ee@pm.me)) © 2025
+## Problem Statement
 
-## Industrial Sensor Systems Implementation
+Industrial systems rely on multiple sensors that often provide conflicting information. Traditional fusion methods (Kalman filters, voting systems, weighted averages) force binary decisions even when evidence is insufficient. This leads to:
 
-RTKA-IS delivers mathematically rigorous sensor fusion and decision-making for industrial applications, autonomous vehicles, robotics, and all sensor-based systems requiring deterministic guarantees under uncertainty. This implementation specializes the RTKA-U mathematical framework for real-time sensor processing, fault-tolerant operation, and safety-critical decision-making.
+- False positives causing unnecessary emergency stops
+- False negatives missing critical safety events  
+- No distinction between "sensor conflict" and "sensor agreement on uncertainty"
 
-The system excels in environments with heterogeneous sensor arrays, conflicting inputs, and varying reliability levels. Unlike probabilistic approaches that may fail catastrophically under edge conditions, RTKA-IS provides formal guarantees for uncertainty propagation while maintaining the computational efficiency required for real-time operation in resource-constrained embedded systems.
+RTKA-IS solves this by implementing a mathematically rigorous three-valued logic system that preserves uncertainty through the entire computation pipeline.
 
-## Core Applications
+## Key Innovation
 
-### Autonomous Vehicle Systems
-- **Sensor Fusion**: LiDAR, camera, radar, ultrasonic integration with confidence weighting
-- **Decision Pipeline**: Path planning under uncertainty with formal safety guarantees
-- **Fault Tolerance**: Graceful degradation when sensors fail or provide conflicting data
-- **Real-time Performance**: Sub-millisecond decision cycles for critical navigation
+The system outputs three states: **TRUE**, **FALSE**, or **UNKNOWN**. The UNKNOWN state is not a failure mode - it's a mathematically determined output when confidence is below threshold. This prevents guessing in safety-critical situations.
 
-### Industrial IoT Networks
-- **Distributed Sensing**: Thousands of heterogeneous sensors with varying reliability
-- **Predictive Maintenance**: Early fault detection with quantified uncertainty
-- **Process Control**: Adaptive thresholds based on operational feedback
-- **Quality Assurance**: Outlier detection and consensus validation
+## Technical Implementation
 
-### Robotics and Automation
-- **Multi-modal Perception**: Vision, tactile, force sensor integration
-- **Collaborative Robots**: Safe human-robot interaction with uncertainty awareness
-- **Swarm Intelligence**: Distributed consensus with Byzantine fault tolerance
-- **Adaptive Control**: Learning optimal thresholds through operation
+**File:** `rtka-is.c`
 
-### Critical Infrastructure
-- **Power Grid Monitoring**: Fault detection and isolation with formal guarantees
-- **Water Treatment**: Multi-sensor validation for safety-critical parameters
-- **SCADA Systems**: Cybersecurity through consensus validation
-- **Environmental Monitoring**: Long-term trend detection with sensor drift compensation
+### Build Instructions
 
-## Technical Architecture
+```bash
+# Production build with parallel processing
+gcc -O3 -march=native -DPARALLEL_ENABLED \
+    rtka-is.c -lpthread -lm -o rtka
 
-### Sensor Fusion Engine
-```c
-typedef struct {
-    rtka_value_t detection;   // {-1: FALSE, 0: UNKNOWN, 1: TRUE}
-    float confidence;         // [0, 1] confidence measure
-    float variance;          // Sensor noise characteristic
-    uint32_t timestamp;      // Temporal alignment
-} sensor_input_t;
-
-// Variance-weighted consensus with adaptive thresholds
-fusion_result_t fuse_sensors_adaptive(sensor_input_t* sensors, size_t n);
+# Safety-critical build with thread verification
+gcc -fsanitize=thread -march=native -DPARALLEL_ENABLED \
+    rtka-is.c -lpthread -lm -o rtka_safe
 ```
 
-### Key Innovations
+## Mathematical Framework
 
-**Variance-Weighted Fusion (OPT-131)**: Sensors contribute inversely proportional to their noise levels, ensuring cleaner sensors dominate decisions while maintaining contributions from all sources.
+### Sensor Fusion Algorithm
 
-**Adaptive Threshold Learning (OPT-123)**: Beta distribution parameters evolve based on decision outcomes, converging to optimal boundaries with mathematical guarantees.
+The system implements variance-weighted consensus with confidence propagation:
 
-**Early Termination Optimization (OPT-125)**: 40-60% performance improvement through absorbing element detection, critical for real-time constraints.
+**Input:** n sensors, each providing:
+- Value: v_i ∈ {-1, 0, 1} (FALSE, UNKNOWN, TRUE)
+- Confidence: c_i ∈ [0, 1]
+- Variance: σ_i² (measurement noise)
 
-**Parallel Processing (OPT-067)**: SIMD operations for confidence calculations, work-stealing for load balancing, achieving O(n/p + log p) complexity with p threads.
+**Processing:**
+```
+1. Weight calculation: w_i = 1 / (1 + σ_i²)
+   - Clean sensors automatically get higher weight
+   
+2. Weighted consensus: V_consensus = Σ(v_i · w_i · c_i) / Σ(c_i)
+   - Not a simple average - incorporates reliability
+   
+3. Confidence aggregation: C_fused = 1 - ∏(1 - c_i)
+   - Probability at least one sensor is correct
+   
+4. Threshold decision:
+   if C_fused < θ: output = UNKNOWN
+   else: output based on V_consensus
+```
 
-## Performance Specifications
+### Adaptive Learning
 
-### Real-time Guarantees
-- **Latency**: 100ns per operation (10MHz throughput)
-- **Determinism**: Worst-case execution time bounded
-- **Memory**: O(1) space complexity for streaming operation
-- **Cache Efficiency**: 94% L1 hit rate with aligned structures
+The system continuously improves its decision threshold using Bayesian inference:
 
-### Reliability Metrics
-- **Type I Error Rate**: < 2.1% (false positive)
-- **Type II Error Rate**: < 1.8% (false negative)
-- **Unknown Resolution**: < 4.7% deferred decisions
-- **MTBF**: > 10^6 hours continuous operation
+```
+Success: α → α + 1
+Failure: β → β + 1
+New threshold: θ = α/(α+β)
+Applied with momentum: θ_t = 0.9·θ_{t-1} + 0.1·θ_new
+```
 
-### Scalability
-- **Sensor Count**: Tested to 10,000 concurrent inputs
-- **Update Rate**: 100kHz sensor sampling supported
-- **Network Distribution**: Byzantine fault-tolerant consensus
-- **Parallel Efficiency**: 0.92 on 16-core systems
+This converges to optimal decision boundaries for the specific sensor configuration and environment.
 
-## Implementation Variants
+### Formal Guarantees
 
-### Embedded C (Primary)
-- [`rtka_is.c`](code/c/rtka_is.c) - Optimized for ARM Cortex-M, RISC-V
-- Zero dynamic allocation for safety-critical systems
-- MISRA C:2012 compliant for automotive applications
-- Hardware acceleration support (NEON, AVX-512)
+**UNKNOWN Preservation Theorem:**
+If any input is UNKNOWN and no logical determination exists, output remains UNKNOWN.
 
-### ROS2 Integration
-- [`rtka_is_ros2`](code/ros2/rtka_is_node.cpp) - Native ROS2 node
-- DDS quality of service configuration
-- Real-time executor compatible
-- Lifecycle node management
+**Example:**
+- Sensor 1: TRUE (high confidence)
+- Sensor 2: UNKNOWN 
+- Sensor 3: FALSE (high confidence)
+- Output: UNKNOWN (conflict without sufficient evidence)
 
-### AUTOSAR Adaptive
-- [`rtka_is_autosar`](code/autosar/rtka_is_aa.cpp) - AP integration
-- Functional safety up to ASIL-D
-- ISO 26262 compliant implementation
-- Cybersecurity per ISO/SAE 21434
+## Real-World Applications
 
-## Certification Support
+### Autonomous Vehicle Object Detection
 
-### Functional Safety
-- IEC 61508 SIL 3 capable
-- ISO 26262 ASIL-D automotive
-- DO-178C Level A aerospace
-- IEC 62304 Class C medical
-
-### Standards Compliance
-- IEEE 1451 Smart Transducer
-- OPC UA Information Model
-- IEC 61131-3 PLC Integration
-- MQTT/CoAP IoT Protocols
-
-## Comparison with Alternatives
-
-| System | RTKA-IS | Kalman Filter | Particle Filter | DNN Fusion |
-|--------|---------|---------------|-----------------|------------|
-| Deterministic | ✓ | ✓ | ✗ | ✗ |
-| Formal Guarantees | ✓ | Partial | ✗ | ✗ |
-| Real-time | ✓ | ✓ | Limited | ✗ |
-| Interpretable | ✓ | ✓ | Partial | ✗ |
-| Adaptive | ✓ | Limited | ✓ | ✓ |
-| Resource Usage | Low | Medium | High | Very High |
-
-## Integration Examples
-
-### Autonomous Vehicle
 ```c
-// Multi-sensor fusion for object detection
+// LiDAR detects obstacle, camera uncertain due to rain, radar says clear
 sensor_input_t sensors[] = {
     {.detection = RTKA_TRUE,    .confidence = 0.95, .variance = 0.01}, // LiDAR
-    {.detection = RTKA_UNKNOWN, .confidence = 0.60, .variance = 0.10}, // Camera
-    {.detection = RTKA_TRUE,    .confidence = 0.85, .variance = 0.05}, // Radar
+    {.detection = RTKA_UNKNOWN, .confidence = 0.40, .variance = 0.20}, // Camera
+    {.detection = RTKA_FALSE,   .confidence = 0.90, .variance = 0.05}, // Radar
 };
+
 fusion_result_t result = fuse_sensors_adaptive(sensors, 3);
-// Result: HIGH confidence detection with formal uncertainty bounds
+
+// System outputs UNKNOWN rather than guessing
+// Vehicle can slow down and request human intervention
 ```
 
-### Industrial IoT
-```python
-# Distributed sensor consensus
-network_sensors = [
-    {"id": "temp_01", "value": 72.3, "confidence": 0.99},
-    {"id": "temp_02", "value": 71.8, "confidence": 0.95},
-    {"id": "temp_03", "value": 89.2, "confidence": 0.92}, # Outlier
-]
-consensus = rtka_is.robust_consensus(network_sensors)
-# Automatically down-weights outlier while maintaining contribution
+### Industrial Robot Safety Zone
+
+```c
+// Multiple safety sensors monitoring human presence
+// System must be certain before allowing robot movement
+// UNKNOWN triggers safe stop, not dangerous guess
 ```
 
-## Documentation
+### Power Grid Fault Detection
 
-- [`Mathematical Foundation`](https://github.com/opsec-ee/rtka-u) - Universal RTKA-U framework
-- [`Sensor Fusion Theory`](doc/sensor_fusion.pdf) - Detailed fusion algorithms
-- [`Safety Analysis`](doc/safety_analysis.pdf) - FMEA and fault tree analysis
-- [`Performance Benchmarks`](doc/benchmarks.pdf) - Comparative analysis
+```c
+// Distributed sensors across transmission lines
+// Distinguishes between "definitely faulty", "definitely safe", 
+// and "insufficient data to determine"
+// Prevents cascading failures from incorrect decisions
+```
 
-## Resources
+## Performance Characteristics
 
-- [GitHub Repository](https://github.com/opsec-ee/rtka-is)
-- [Technical Support](mailto:opsec.ee@pm.me)
-- [Commercial Licensing](mailto:opsec.ee@pm.me)
+### Computational Efficiency
+- **Sequential:** O(n) time, O(1) space for n sensors
+- **Parallel:** O(n/p + log p) time with p processors
+- **Early termination:** Exits immediately on high-confidence detection
+
+### Optimization Features
+- Cache-aligned data structures (64-byte boundaries)
+- SIMD vectorization for batch confidence calculations
+- Lock-free atomics for parallel threshold updates
+- Precomputed lookup tables for transcendental functions
+
+### Scalability
+- Tested with up to 1000 concurrent sensors
+- Maintains microsecond latency at scale
+- Thread-safe for multi-core systems
+
+## Why This Matters
+
+### Comparison with Traditional Approaches
+
+| Aspect | Kalman Filter | Voting System | RTKA-IS |
+|--------|---------------|---------------|---------|
+| Handles conflicts | Assumes Gaussian | Majority wins | Outputs UNKNOWN |
+| Adapts to sensors | Fixed model | No | Learns optimal thresholds |
+| Uncertainty handling | Statistical only | None | Explicit ternary state |
+| Outlier robustness | Poor | Moderate | Variance weighting |
+| Interpretability | Complex | Simple | Clear confidence metrics |
+
+### Critical Advantages
+
+1. **No forced decisions:** System explicitly indicates when evidence is insufficient
+2. **Automatic sensor weighting:** Reliable sensors automatically get more influence
+3. **Online learning:** Continuously improves without retraining
+4. **Formal verification:** Mathematical proofs of correctness
+5. **Production ready:** Thread-safe, tested, optimized implementation
+
+## Testing
+
+Comprehensive test suite included:
+
+```bash
+./rtka  # Runs all validation tests
+
+# Test output includes:
+# - Logical operation verification
+# - Sensor fusion scenarios  
+# - Parallel consistency checks
+# - Threshold adaptation convergence
+```
+
+## Repository Structure
+
+```
+rtka_u_core_parallel_enhanced-v1_3.c  # Current implementation
+rtka_base.h                           # Type definitions (planned)
+examples/                             # Application examples (planned)
+benchmarks/                           # Performance tests (planned)
+```
+
+## Future Development
+
+- Standardized API for industrial protocols (OPC UA, MQTT)
+- Hardware acceleration support (FPGA, GPU)
+- Formal safety certification (IEC 61508, ISO 26262)
+- Integration with ROS2 and AUTOSAR
+
+## Author
+
+H. Overman ([opsec.ee@pm.me](mailto:opsec.ee@pm.me))  
+© 2025
 
 ## License
 
-Licensed under Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International for research use.
+Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International for research.
+Commercial licensing available for industrial deployment.
 
-Commercial licensing available for industrial deployment. Contact opsec.ee@pm.me for terms.
+## Citation
 
----
+```bibtex
+@software{overman2025rtka,
+  author = {Overman, H.},
+  title = {RTKA-IS: Recursive Ternary Knowledge Algorithm for Industrial Sensors},
+  year = {2025},
+  url = {https://github.com/opsec-ee/rtka-is},
+  note = {High-performance sensor fusion with explicit uncertainty preservation}
+}
+```
 
-*"Bringing mathematical rigor to sensor fusion—transforming noisy, conflicting sensor data into reliable decisions with formal guarantees for safety-critical systems."*
+## Contact
+
+Technical inquiries: opsec.ee@pm.me  
+Repository: https://github.com/opsec-ee/rtka-is
