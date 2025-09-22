@@ -55,6 +55,12 @@ Error handling uses explicit return codes and status flags rather than exception
 
 The repository provides the core C implementation with industrial sensor extensions, threshold configuration and adaptive algorithms, parallel processing support with platform-specific optimizations, and integration examples for common industrial applications. The modular design facilitates customization while maintaining core functionality.
 
+[`C Implementation`](/code/c_code/rtka-u.c)
+
+## Mathematical Foundation
+
+[`Mathematical Rigor`](/doc/papers/mathematics.md)
+
 ## Commercial Considerations
 
 RTKA-IS is designed for commercial deployment in industrial settings. The implementation considers requirements for regulatory compliance, long-term support, and integration with proprietary systems. Commercial licensing terms are available for organizations requiring production deployment.
