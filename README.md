@@ -17,22 +17,6 @@ RTKA-IS solves this by implementing a mathematically rigorous three-valued logic
 
 The system outputs three states: **TRUE**, **FALSE**, or **UNKNOWN**. The UNKNOWN state is not a failure mode - it's a mathematically determined output when confidence is below threshold. This prevents guessing in safety-critical situations.
 
-## Technical Implementation
-
-**File:** `rtka-is.c`
-
-### Build Instructions
-
-```bash
-# Production build with parallel processing
-gcc -O3 -march=native -DPARALLEL_ENABLED \
-    rtka-is.c -lpthread -lm -o rtka
-
-# Safety-critical build with thread verification
-gcc -fsanitize=thread -march=native -DPARALLEL_ENABLED \
-    rtka-is.c -lpthread -lm -o rtka_safe
-```
-
 ## Mathematical Framework
 
 ### Sensor Fusion Algorithm
@@ -189,12 +173,11 @@ benchmarks/                           # Performance tests (planned)
 
 ## Author
 
-H. Overman ([opsec.ee@pm.me](mailto:opsec.ee@pm.me))  
-© 2025
+H. Overman ([opsec.ee@pm.me](mailto:opsec.ee@pm.me)) © 2025
 
 ## License
 
-Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International for research.
+Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International for research.\
 Commercial licensing available for industrial deployment.
 
 ## Citation
