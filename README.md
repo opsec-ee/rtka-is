@@ -3,7 +3,7 @@
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.17148691.svg)](https://doi.org/10.5281/zenodo.17173499)
 
 
-![RTKA-U](github.com/opsec-ee/rtka-u)
+[RTKA-U](https://github.com/opsec-ee/rtka-u)
 
 ## Overview
 
