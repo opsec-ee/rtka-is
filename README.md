@@ -59,7 +59,7 @@ The repository provides the core C implementation with industrial sensor extensi
 
 ## Mathematical Foundation
 
-[`Mathematical Rigor`](/doc/papers/mathematics.md)
+[`Mathematical Rigor`](https://github.com/opsec-ee/rtka-u/blob/main/doc/papers/mathematics.md)
 
 ## Commercial Considerations
 
