@@ -204,7 +204,7 @@ Commercial licensing available for industrial deployment.
   author = {Overman, H.},
   title = {RTKA-IS: Recursive Ternary Knowledge Algorithm for Industrial Sensors},
   year = {2025},
-  url = {https://github.com/opsec-ee/rtka-is},
+  url = {https://github.com/opsec-ee/rtka-u},
   note = {High-performance sensor fusion with explicit uncertainty preservation}
 }
 ```
