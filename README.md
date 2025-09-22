@@ -60,4 +60,4 @@ The framework development prioritizes stability and reliability over experimenta
 
 H. Overman  
 Email: opsec.ee@pm.me  
-GitHub: github.com/opsec-ee/rtka-is
+GitHub: github.com/opsec-ee/rtka-u
