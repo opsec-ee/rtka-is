@@ -1,6 +1,8 @@
 # RTKA-IS: Recursive Ternary Knowledge Algorithm for Industrial Sensors
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.17148691.svg)](https://doi.org/10.5281/zenodo.17173499)
+
+
 ## Overview
 
 RTKA-IS extends the RTKA-U universal core framework for industrial sensor fusion and real-time applications. This specialized implementation addresses requirements for safety-critical industrial systems where sensor reliability and uncertainty quantification determine operational safety.
