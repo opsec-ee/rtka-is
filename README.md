@@ -54,13 +54,13 @@ fusion_result_t fuse_sensors_adaptive(sensor_input_t* sensors, size_t n);
 
 ### Key Innovations
 
-**Variance-Weighted Fusion**: Sensors contribute inversely proportional to their noise levels, ensuring cleaner sensors dominate decisions while maintaining contributions from all sources.
+**Variance-Weighted Fusion (OPT-131)**: Sensors contribute inversely proportional to their noise levels, ensuring cleaner sensors dominate decisions while maintaining contributions from all sources.
 
-**Adaptive Threshold Learning**: Beta distribution parameters evolve based on decision outcomes, converging to optimal boundaries with mathematical guarantees.
+**Adaptive Threshold Learning (OPT-123)**: Beta distribution parameters evolve based on decision outcomes, converging to optimal boundaries with mathematical guarantees.
 
-**Early Termination Optimization**: 40-60% performance improvement through absorbing element detection, critical for real-time constraints.
+**Early Termination Optimization (OPT-125)**: 40-60% performance improvement through absorbing element detection, critical for real-time constraints.
 
-**Parallel Processing**: SIMD operations for confidence calculations, work-stealing for load balancing, achieving O(n/p + log p) complexity with p threads.
+**Parallel Processing (OPT-067)**: SIMD operations for confidence calculations, work-stealing for load balancing, achieving O(n/p + log p) complexity with p threads.
 
 ## Performance Specifications
 
